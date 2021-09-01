@@ -1,0 +1,38 @@
+{
+  "name": "notification",
+  "description": "A plugin for handling notifications",
+  "proto": "http",
+  "cmd": "go run main.go",
+  "endpoint": "localhost:9999",
+  "ui_components": [
+    {
+      "name": "notification",
+      "title": "Notification",
+      "src": "frontend/src/NotificationTab.vue",
+      "type": "tab",
+      "path": "notification",
+      "parent_paths": [
+        "/projects/:id",
+        "/spiders/:id",
+        "/users/:id"
+      ]
+    },
+    {
+      "name": "notification-template-list",
+      "title": "Notification Template List",
+      "src": "frontend/src/NotificationTemplateList.vue",
+      "type": "view",
+      "path": "notification-templates"
+    }
+  ],
+  "ui_sidebar_navs": [
+    {
+      "path": "/notification-templates",
+      "title": "Notification Templates",
+      "icon": [
+        "fa",
+        "file-code"
+      ]
+    }
+  ]
+}
