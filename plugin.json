@@ -8,7 +8,7 @@
     {
       "name": "notification",
       "title": "Notification",
-      "src": "frontend/src/NotificationTab.vue",
+      "src": "ui/src/NotificationTab.vue",
       "type": "tab",
       "path": "notification",
       "parent_paths": [
@@ -20,7 +20,7 @@
     {
       "name": "notification-template-list",
       "title": "Notification Template List",
-      "src": "frontend/src/NotificationTemplateList.vue",
+      "src": "ui/src/NotificationTemplateList.vue",
       "type": "view",
       "path": "notification-templates"
     }
