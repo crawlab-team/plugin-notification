@@ -18,20 +18,27 @@
       ]
     },
     {
-      "name": "notification-template-list",
-      "title": "Notification Template List",
-      "src": "ui/src/NotificationTemplateList.vue",
+      "name": "notification-list",
+      "title": "Notifications",
+      "src": "ui/src/NotificationList.vue",
       "type": "view",
-      "path": "notification-templates"
+      "path": "notifications"
+    },
+    {
+      "name": "notification-detail",
+      "title": "Notifications",
+      "src": "ui/src/NotificationDetail.vue",
+      "type": "view",
+      "path": "notifications/:id"
     }
   ],
   "ui_sidebar_navs": [
     {
-      "path": "/notification-templates",
-      "title": "Notification Templates",
+      "path": "/notifications",
+      "title": "Notifications",
       "icon": [
         "fa",
-        "file-code"
+        "envelope"
       ]
     }
   ]

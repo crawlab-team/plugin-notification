@@ -15,6 +15,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/apex/log v1.9.0
 	github.com/crawlab-team/crawlab-core v0.6.0-beta.20210802.1344
+	github.com/crawlab-team/crawlab-db v0.1.1
 	github.com/crawlab-team/crawlab-plugin v0.0.0-20210604093326-57f35f02daf5
 	github.com/gavv/httpexpect/v2 v2.2.0
 	github.com/gin-gonic/gin v1.6.3

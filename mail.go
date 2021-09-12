@@ -85,9 +85,10 @@ type smtpAuthentication struct {
 type sendOptions struct {
 	To      string
 	Subject string
+	Cc      string
 }
 
-// send sends the email
+// send email
 func send(smtpConfig smtpAuthentication, options sendOptions, htmlBody string, txtBody string) error {
 
 	if smtpConfig.Server == "" {
@@ -121,12 +122,13 @@ func send(smtpConfig smtpAuthentication, options sendOptions, htmlBody string, t
 	m := gomail.NewMessage()
 	m.SetHeader("From", from.String())
 	m.SetHeader("To", options.To)
+	m.SetHeader("Cc", options.Cc)
 	m.SetHeader("Subject", options.Subject)
 
 	m.SetBody("text/plain", txtBody)
 	m.AddAlternative("text/html", htmlBody)
 
-	d := gomail.NewPlainDialer(smtpConfig.Server, smtpConfig.Port, smtpConfig.SMTPUser, smtpConfig.SMTPPassword)
+	d := gomail.NewDialer(smtpConfig.Server, smtpConfig.Port, smtpConfig.SMTPUser, smtpConfig.SMTPPassword)
 
 	return d.DialAndSend(m)
 }
