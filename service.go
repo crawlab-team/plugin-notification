@@ -4,15 +4,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/apex/log"
 	"github.com/crawlab-team/crawlab-core/controllers"
+	"github.com/crawlab-team/crawlab-core/entity"
 	"github.com/crawlab-team/crawlab-core/interfaces"
 	"github.com/crawlab-team/crawlab-core/models/models"
 	mongo2 "github.com/crawlab-team/crawlab-db/mongo"
+	grpc "github.com/crawlab-team/crawlab-grpc"
 	plugin "github.com/crawlab-team/crawlab-plugin"
+	"github.com/crawlab-team/go-trace"
+	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"io"
+	"strings"
+	"time"
 )
 
 type Service struct {
@@ -21,6 +29,10 @@ type Service struct {
 }
 
 func (svc *Service) Init() (err error) {
+	// handle events
+	go svc.handleEvents()
+
+	// api
 	api := svc.GetApi()
 	api.POST("/send", svc.send)
 	api.GET("/settings", svc.getSettingList)
@@ -31,12 +43,6 @@ func (svc *Service) Init() (err error) {
 	api.POST("/settings/:id/enable", svc.enableSetting)
 	api.POST("/settings/:id/disable", svc.disableSetting)
 
-	//api.POST("/get", svc.get)
-	//api.POST("/get/:model/*oid", svc.get)
-	//api.POST("/set", svc.set)
-	//api.POST("/set/:model/*oid", svc.set)
-	//api.POST("/delete", svc.delete)
-	//api.POST("/delete/:model/*oid", svc.delete)
 	return nil
 }
 
@@ -287,6 +293,135 @@ func (svc *Service) disableSetting(c *gin.Context) {
 	svc._toggleSettingFunc(false)(c)
 }
 
+func (svc *Service) handleEvents() {
+	log.Infof("start handling events")
+
+	// get stream
+	var stream grpc.PluginService_SubscribeClient
+	for {
+		stream = svc.Internal.GetEventService().GetStream()
+		if stream == nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
+	}
+
+	for {
+		// receive stream message
+		msg, err := stream.Recv()
+
+		if err != nil {
+			// TODO: re-connect
+
+			// end
+			if err == io.EOF {
+				log.Infof("received EOF signal, disconnecting")
+				return
+			}
+
+			trace.PrintError(err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		var data entity.GrpcEventServiceMessage
+		switch msg.Code {
+		case grpc.StreamMessageCode_SEND_EVENT:
+			// data
+			if err := json.Unmarshal(msg.Data, &data); err != nil {
+				return
+			}
+			if len(data.Events) < 1 {
+				continue
+			}
+
+			// event name
+			eventName := data.Events[0]
+
+			// settings
+			var settings []NotificationSetting
+			if err := svc.col.Find(bson.M{
+				"enabled": true,
+			}, nil).All(&settings); err != nil {
+				continue
+			}
+
+			// triggers
+			tSet := hashset.New()
+			for _, s := range settings {
+				for _, t := range s.Triggers {
+					tSet.Add(t.Event)
+				}
+			}
+
+			// filter
+			// TODO: performance concern
+			if !tSet.Contains(eventName) {
+				continue
+			}
+
+			// handle events
+			arr := strings.Split(eventName, ":")
+			switch arr[0] {
+			case "model":
+				if len(arr) < 2 {
+					continue
+				}
+				colName := arr[1]
+				action := arr[2]
+				if err := svc._handleEventModel(colName, action, data.Data); err != nil {
+					trace.PrintError(err)
+				}
+			}
+		default:
+			continue
+		}
+	}
+}
+
+func (svc *Service) _handleEventModel(colName, action string, data []byte) (err error) {
+	m := models.NewModelMap()
+	switch colName {
+	case interfaces.ModelColNameTask:
+		_ = json.Unmarshal(data, &m.Task)
+		if err := svc._sendByTaskId(m.Task.GetId()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (svc *Service) _sendByTaskId(taskId primitive.ObjectID) (err error) {
+	// models
+	m, err := svc._getModelsByTaskId(taskId)
+	if err != nil {
+		return err
+	}
+
+	// setting
+	s, err := svc._getSetting(m)
+	if err != nil {
+		return err
+	}
+
+	// send
+	switch s.Type {
+	case NotificationTypeMail:
+		err = svc.sendMail(s, m)
+	case NotificationTypeMobile:
+		err = svc.sendMobile(s, m)
+	default:
+		return err
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (svc *Service) _toggleSettingFunc(value bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id, err := primitive.ObjectIDFromHex(c.Param("id"))
@@ -308,107 +443,11 @@ func (svc *Service) _toggleSettingFunc(value bool) func(c *gin.Context) {
 	}
 }
 
-//func (svc *Service) get(c *gin.Context) {
-//	_, _, query := svc._getParamsAndQuery(c)
-//
-//	// extra value model service
-//	evSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdExtraValue)
-//	if err != nil {
-//		controllers.HandleErrorInternalServerError(c, err)
-//		return
-//	}
-//
-//	// attempt to find in database
-//	doc, err := evSvc.Get(query, nil)
-//	if err != nil {
-//		controllers.HandleErrorInternalServerError(c, err)
-//		return
-//	}
-//
-//	// extra value
-//	ev := doc.(interfaces.ExtraValue)
-//	controllers.HandleSuccessWithData(c, ev)
-//}
-//
-//func (svc *Service) set(c *gin.Context) {
-//	model, oid, query := svc._getParamsAndQuery(c)
-//
-//	var settings NotificationSetting
-//	if err := c.ShouldBindJSON(&settings); err != nil {
-//		controllers.HandleErrorBadRequest(c, err)
-//		return
-//	}
-//
-//	// extra value model service
-//	evSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdExtraValue)
-//	if err != nil {
-//		controllers.HandleErrorInternalServerError(c, err)
-//		return
-//	}
-//
-//	// extra value
-//	var ev interfaces.ExtraValue
-//
-//	// attempt to find in database
-//	doc, err := evSvc.Get(query, nil)
-//	if err != nil {
-//		if err.Error() != mongo.ErrNoDocuments.Error() {
-//			// error
-//			controllers.HandleErrorInternalServerError(c, err)
-//			return
-//		}
-//		// not exists, add a new one
-//		ev = &models.ExtraValue{
-//			ObjectId: oid,
-//			Model:    model,
-//			Type:     ExtraValueTypeNotification,
-//			Value:    settings,
-//		}
-//		if err := client.NewModelDelegate(ev).Add(); err != nil {
-//			controllers.HandleErrorInternalServerError(c, err)
-//			return
-//		}
-//	} else {
-//		// exists, update
-//		ev = doc.(interfaces.ExtraValue)
-//		ev.SetValue(settings)
-//		if err := client.NewModelDelegate(ev).Save(); err != nil {
-//			controllers.HandleErrorInternalServerError(c, err)
-//			return
-//		}
-//	}
-//
-//	controllers.HandleSuccess(c)
-//}
-//
-//func (svc *Service) delete(c *gin.Context) {
-//	_, _, query := svc._getParamsAndQuery(c)
-//
-//	// extra value model service
-//	evSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdExtraValue)
-//	if err != nil {
-//		controllers.HandleErrorInternalServerError(c, err)
-//		return
-//	}
-//
-//	// attempt to find in database
-//	doc, err := evSvc.Get(query, nil)
-//	if err != nil {
-//		controllers.HandleErrorInternalServerError(c, err)
-//		return
-//	}
-//
-//	// delete
-//	ev := doc.(interfaces.ExtraValue)
-//	if err := client.NewModelDelegate(ev).Delete(); err != nil {
-//		controllers.HandleErrorInternalServerError(c, err)
-//		return
-//	}
-//
-//	controllers.HandleSuccess(c)
-//}
-
 func (svc *Service) _getModels(payload SendPayload) (m *models.ModelMap, err error) {
+	return svc._getModelsByTaskId(payload.TaskId)
+}
+
+func (svc *Service) _getModelsByTaskId(taskId primitive.ObjectID) (m *models.ModelMap, err error) {
 	m = models.NewModelMap()
 	var doc interfaces.Model
 
@@ -417,7 +456,7 @@ func (svc *Service) _getModels(payload SendPayload) (m *models.ModelMap, err err
 	if err != nil {
 		return nil, err
 	}
-	doc, err = taskSvc.GetById(payload.TaskId)
+	doc, err = taskSvc.GetById(taskId)
 	if err != nil {
 		return
 	}

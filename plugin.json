@@ -4,6 +4,7 @@
   "proto": "http",
   "cmd": "go run main.go",
   "endpoint": "localhost:9999",
+  "event_key": "^model:",
   "ui_components": [
     {
       "name": "notification",

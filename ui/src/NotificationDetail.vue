@@ -23,6 +23,11 @@
               v-model="form"
           />
         </template>
+        <NotificationDetailTabTriggers
+            v-else-if="activeKey === 'triggers'"
+            :form="form"
+            @change="onTriggersChange"
+        />
         <NotificationDetailTabTemplate
             v-else-if="activeKey === 'template'"
             :form="form"
@@ -39,6 +44,7 @@ import {useRequest} from 'crawlab-ui';
 import {ElMessage} from 'element-plus';
 import NotificationForm from './NotificationForm.vue';
 import NotificationDetailTabTemplate from './NotificationDetailTabTemplate.vue';
+import NotificationDetailTabTriggers from './NotificationDetailTabTriggers.vue';
 
 const endpoint = '/plugin-proxy/notification/settings';
 
@@ -50,6 +56,7 @@ const {
 export default defineComponent({
   name: 'NotificationDetail',
   components: {
+    NotificationDetailTabTriggers,
     NotificationForm,
     NotificationDetailTabTemplate,
   },
@@ -68,9 +75,13 @@ export default defineComponent({
         title: 'Overview',
       },
       {
+        id: 'triggers',
+        title: 'Triggers',
+      },
+      {
         id: 'template',
         title: 'Template',
-      }
+      },
     ]);
 
     const form = ref({});
@@ -82,7 +93,7 @@ export default defineComponent({
     };
 
     const onSave = async () => {
-      await formRef.value.validate();
+      if (formRef.value) await formRef.value.validate();
       await post(`${endpoint}/${id.value}`, form.value);
       ElMessage.success('Saved successfully');
     };
@@ -90,12 +101,29 @@ export default defineComponent({
     onMounted(() => {
       (async () => {
         const res = await get(`${endpoint}/${id.value}`);
-        form.value = res.data;
+        const {data} = res;
+        form.value = data;
       })();
     });
 
     const onTabSelect = (tabName) => {
       activeKey.value = tabName;
+    };
+
+    const allTriggers = ref([
+      {
+        event: 'model:tasks:add',
+        name: 'Create Task',
+      },
+      {
+        event: 'model:tasks:save',
+        name: 'Update Task',
+      },
+    ]);
+
+    const onTriggersChange = (value) => {
+      const triggers = value.map(v => allTriggers.value.find(d => d.event === v));
+      form.value.triggers = [].concat(triggers);
     };
 
     return {
@@ -106,6 +134,7 @@ export default defineComponent({
       form,
       formRef,
       onTabSelect,
+      onTriggersChange,
     };
   },
 });
