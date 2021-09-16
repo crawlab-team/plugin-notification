@@ -42,5 +42,19 @@
         "envelope"
       ]
     }
+  ],
+  "ui_assets": [
+    {
+      "path": "ui/public/simplemde/simplemde.js",
+      "type": "js"
+    },
+    {
+      "path": "ui/public/simplemde/simplemde.css",
+      "type": "css"
+    },
+    {
+      "path": "ui/public/css/style.css",
+      "type": "css"
+    }
   ]
 }

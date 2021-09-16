@@ -31,6 +31,8 @@
         <NotificationDetailTabTemplate
             v-else-if="activeKey === 'template'"
             :form="form"
+            @title-change="onTitleChange"
+            @template-change="onTemplateChange"
         />
       </div>
     </div>
@@ -126,6 +128,14 @@ export default defineComponent({
       form.value.triggers = [].concat(triggers);
     };
 
+    const onTitleChange = (value) => {
+      form.value.title = value;
+    };
+
+    const onTemplateChange = (value) => {
+      form.value.template = value;
+    };
+
     return {
       activeKey,
       tabs,
@@ -135,6 +145,8 @@ export default defineComponent({
       formRef,
       onTabSelect,
       onTriggersChange,
+      onTitleChange,
+      onTemplateChange,
     };
   },
 });

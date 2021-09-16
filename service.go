@@ -8,6 +8,7 @@ import (
 	"github.com/crawlab-team/crawlab-core/controllers"
 	"github.com/crawlab-team/crawlab-core/entity"
 	"github.com/crawlab-team/crawlab-core/interfaces"
+	"github.com/crawlab-team/crawlab-core/models/delegate"
 	"github.com/crawlab-team/crawlab-core/models/models"
 	mongo2 "github.com/crawlab-team/crawlab-db/mongo"
 	grpc "github.com/crawlab-team/crawlab-grpc"
@@ -157,8 +158,18 @@ func (svc *Service) send(c *gin.Context) {
 }
 
 func (svc *Service) sendMail(s *NotificationSetting, m *models.ModelMap) (err error) {
-	// TODO: implement
-	//SendMail(s.Mail.To)
+	if m.User.Id.IsZero() {
+		return errors.New("user id is empty")
+	}
+
+	title := s.Title
+	if title == "" {
+		title = fmt.Sprintf("[Crawlab] \"%s\" 任务 %s", m.Spider.GetName(), m.Task.GetStatus())
+	}
+
+	if err := SendMail(s, m); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -508,7 +519,31 @@ func (svc *Service) _getModelsByTaskId(taskId primitive.ObjectID) (m *models.Mod
 		m.Project = *doc.(*models.Project)
 	}
 
-	// TODO: user
+	// user
+	ta, err := delegate.NewModelDelegate(&m.Task).GetArtifact()
+	if err != nil {
+		return nil, err
+	}
+	taSys := ta.GetSys()
+	if taSys != nil {
+		var uid primitive.ObjectID
+		if !taSys.GetUpdateUid().IsZero() {
+			uid = taSys.GetUpdateUid()
+		} else {
+			uid = taSys.GetCreateUid()
+		}
+		if !uid.IsZero() {
+			userSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdUser)
+			if err != nil {
+				return nil, err
+			}
+			doc, err = userSvc.GetById(uid)
+			if err != nil {
+				return nil, err
+			}
+			m.User = *doc.(*models.User)
+		}
+	}
 
 	return m, nil
 }

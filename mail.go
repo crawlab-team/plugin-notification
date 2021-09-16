@@ -2,16 +2,23 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/apex/log"
+	"github.com/crawlab-team/crawlab-core/constants"
+	"github.com/crawlab-team/crawlab-core/models/models"
+	"github.com/crawlab-team/crawlab-core/utils"
 	"github.com/matcornic/hermes"
 	"gopkg.in/gomail.v2"
 	"net/mail"
-	"os"
 	"runtime/debug"
 	"strconv"
 )
 
-func SendMail(toEmail string, toName string, subject string, content string) error {
+func GetMailContent(s *NotificationSetting, m *models.ModelMap) (content string) {
+	return GetTaskEmailMarkdownContent(m)
+}
+
+func SendMail(s *NotificationSetting, m *models.ModelMap) error {
 	// hermes instance
 	h := hermes.Hermes{
 		Theme: new(hermes.Default),
@@ -22,26 +29,29 @@ func SendMail(toEmail string, toName string, subject string, content string) err
 	}
 
 	// config
-	port, _ := strconv.Atoi(os.Getenv("CRAWLAB_NOTIFICATION_MAIL_PORT"))
-	password := os.Getenv("CRAWLAB_NOTIFICATION_MAIL_SMTP_PASSWORD")
-	SMTPUser := os.Getenv("CRAWLAB_NOTIFICATION_MAIL_SMTP_USER")
+	port, _ := strconv.Atoi(s.Mail.Port)
+	password := s.Mail.Password // test password: ALWVDPRHBEXOENXD
+	SMTPUser := s.Mail.User
 	smtpConfig := smtpAuthentication{
-		Server:         os.Getenv("CRAWLAB_NOTIFICATION_MAIL_SERVER"),
+		Server:         s.Mail.Server,
 		Port:           port,
-		SenderEmail:    os.Getenv("CRAWLAB_NOTIFICATION_MAIL_SENDEREMAIL"),
-		SenderIdentity: os.Getenv("CRAWLAB_NOTIFICATION_MAIL_SENDERIDENTITY"),
+		SenderEmail:    s.Mail.SenderEmail,
+		SenderIdentity: s.Mail.SenderIdentity,
 		SMTPPassword:   password,
 		SMTPUser:       SMTPUser,
 	}
 	options := sendOptions{
-		To:      toEmail,
-		Subject: subject,
+		To:      m.User.Email,
+		Subject: s.Title,
 	}
+
+	// content
+	content := GetMailContent(s, m)
 
 	// email instance
 	email := hermes.Email{
 		Body: hermes.Body{
-			Name:         toName,
+			Name:         m.User.Username,
 			FreeMarkdown: hermes.Markdown(content + GetFooter()),
 		},
 	}
@@ -122,8 +132,10 @@ func send(smtpConfig smtpAuthentication, options sendOptions, htmlBody string, t
 	m := gomail.NewMessage()
 	m.SetHeader("From", from.String())
 	m.SetHeader("To", options.To)
-	m.SetHeader("Cc", options.Cc)
 	m.SetHeader("Subject", options.Subject)
+	if options.Cc != "" {
+		m.SetHeader("Cc", options.Cc)
+	}
 
 	m.SetBody("text/plain", txtBody)
 	m.AddAlternative("text/html", htmlBody)
@@ -137,4 +149,55 @@ func GetFooter() string {
 	return `
 [Github](https://github.com/crawlab-team/crawlab) | [Documentation](http://docs.crawlab.cn) | [Docker](https://hub.docker.com/r/tikazyq/crawlab)
 `
+}
+
+func GetTaskEmailMarkdownContent(m *models.ModelMap) string {
+	n := m.Node
+	s := m.Spider
+	t := m.Task
+	ts := m.TaskStat
+	errMsg := ""
+	statusMsg := fmt.Sprintf(`<span style="color:green">%s</span>`, t.Status)
+	if t.Status == constants.TaskStatusError {
+		errMsg = " with errors"
+		statusMsg = fmt.Sprintf(`<span style="color:red">%s</span>`, t.Status)
+	}
+	return fmt.Sprintf(`
+Your task has finished%s. Please find the task info below.
+
+|Key:|Value|
+|--: | :--|
+|**Task ID:** | %s|
+|**Task Status:** | %s|
+|**Task Param:** | %s|
+|**Spider ID:** | %s|
+|**Spider Name:** | %s|
+|**Node:** | %s|
+|**Create Time:** | %s|
+|**Start Time:** | %s|
+|**Finish Time:** | %s|
+|**Wait Duration:** | %d sec|
+|**Runtime Duration:** | %d sec|
+|**Total Duration:** | %d sec|
+|**Number of Results:** | %d|
+|**Error:** | <span style="color:red">%s</span>|
+
+Please login to Crawlab to view the details.
+`,
+		errMsg,
+		t.Id,
+		statusMsg,
+		t.Param,
+		s.Id.Hex(),
+		s.Name,
+		n.Name,
+		utils.GetLocalTimeString(ts.CreateTs),
+		utils.GetLocalTimeString(ts.StartTs),
+		utils.GetLocalTimeString(ts.EndTs),
+		ts.WaitDuration/1000,
+		ts.RuntimeDuration/1000,
+		ts.TotalDuration/1000,
+		ts.ResultCount,
+		t.Error,
+	)
 }

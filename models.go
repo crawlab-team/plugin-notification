@@ -9,6 +9,8 @@ type NotificationSetting struct {
 	Description string                       `json:"description" bson:"description"`
 	Enabled     bool                         `json:"enabled" bson:"enabled"`
 	Global      bool                         `json:"global" bson:"global"`
+	Title       string                       `json:"title,omitempty" bson:"title,omitempty"`
+	Template    string                       `json:"template,omitempty" bson:"template,omitempty"`
 	Triggers    []NotificationSettingTrigger `json:"triggers" bson:"triggers"`
 	Targets     []NotificationSettingTarget  `json:"targets" bson:"targets"`
 	Mail        NotificationSettingMail      `json:"mail,omitempty" bson:"mail,omitempty"`
@@ -22,16 +24,12 @@ type NotificationSettingMail struct {
 	Password       string `json:"password,omitempty" bson:"password,omitempty"`
 	SenderEmail    string `json:"sender_email,omitempty" bson:"sender_email,omitempty"`
 	SenderIdentity string `json:"sender_identity,omitempty" bson:"sender_identity,omitempty"`
-	Title          string `json:"title,omitempty" bson:"title,omitempty"`
-	Template       string `json:"template,omitempty" bson:"template,omitempty"`
 	To             string `json:"to,omitempty" bson:"to,omitempty"`
 	Cc             string `json:"cc,omitempty" bson:"cc,omitempty"`
 }
 
 type NotificationSettingMobile struct {
-	Webhook  string `json:"webhook" bson:"webhook"`
-	Title    string `json:"title,omitempty" bson:"title,omitempty"`
-	Template string `json:"template,omitempty" bson:"template,omitempty"`
+	Webhook string `json:"webhook" bson:"webhook"`
 }
 
 type NotificationSettingTarget struct {
