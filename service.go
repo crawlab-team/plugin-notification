@@ -85,7 +85,6 @@ func (svc *Service) initData() (err error) {
 			Description: "This is the default mail notification. You can edit it with your own settings",
 			Triggers: []string{
 				"model:tasks:change",
-				"model:tasks:save",
 			},
 			Title: "[Crawlab] Task Update: {{$.status}}",
 			Template: `Dear {{$.user.username}},
@@ -130,12 +129,30 @@ Please find the task data as below.
 			Description: "This is the default mobile notification. You can edit it with your own settings",
 			Triggers: []string{
 				"model:tasks:change",
-				"model:tasks:save",
 			},
+			Title: "[Crawlab] Task Update: {{$.status}}",
+			Template: `Dear {{$.user.username}},
+
+Please find the task data as below.
+
+- **Task Status**: {{$.status}}
+- **Task Priority**: {{$.priority}}
+- **Task Mode**: {{$.mode}}
+- **Task Command**: {{$.cmd}}
+- **Task Params**: {{$.params}}
+- **Error Message**: {{$.error}}
+- **Node**: {{$.node.name}}
+- **Spider**: {{$.spider.name}}
+- **Project**: {{$.spider.project.name}}
+- **Schedule**: {{$.schedule.name}}
+- **Result Count**: {{$.:task_stat.result_count}}
+- **Wait Duration (sec)**: {#{{$.:task_stat.wait_duration}}/1000#}
+- **Runtime Duration (sec)**: {#{{$.:task_stat.runtime_duration}}/1000#}
+- **Total Duration (sec)**: {#{{$.:task_stat.total_duration}}/1000#}
+- **Result Count**: {{$.:task_stat.result_count}}
+- **Avg Results / Sec**: {#{{$.:task_stat.result_count}}/({{$.:task_stat.total_duration}}/1000)#}`,
 			Mobile: NotificationSettingMobile{
-				//Webhook:  "",
-				//Title:    "",
-				//Template: "",
+				Webhook: os.Getenv("CRAWLAB_PLUGIN_NOTIFICATION_MOBILE_WEBHOOK"),
 			},
 		},
 	}
@@ -225,14 +242,27 @@ func (svc *Service) sendMail(s *NotificationSetting, entity bson.M) (err error) 
 	return nil
 }
 
-func (svc *Service) sendMobile(s *NotificationSetting, m *models.ModelMap) (err error) {
-	// title
-	title := fmt.Sprintf("[Crawlab] \"%s\" 任务 %s", m.Spider.GetName(), m.Task.GetStatus())
-	content := GetMobileTaskMarkdownContent(&m.Task, &m.Spider, &m.Node, &m.TaskStat)
-
+func (svc *Service) sendMobile(s *NotificationSetting, entity bson.M) (err error) {
 	// webhook
-	//webhook := "https://oapi.dingtalk.com/robot/send?access_token=7e08bf6f891b0ffc81fc91c4871f744251df5b143db242e271fb28c158a3176c"
-	webhook := s.Mobile.Webhook
+	webhook, err := parser.Parse(s.Mobile.Webhook, entity)
+	if err != nil {
+		log.Warnf("parsing 'webhook' error: %v", err)
+	}
+	if webhook == "" {
+		return nil
+	}
+
+	// title
+	title, err := parser.Parse(s.Title, entity)
+	if err != nil {
+		log.Warnf("parsing 'title' error: %v", err)
+	}
+
+	// content
+	content, err := parser.Parse(s.Template, entity)
+	if err != nil {
+		log.Warnf("parsing 'content' error: %v", err)
+	}
 
 	// send
 	if err := SendMobileNotification(webhook, title, content); err != nil {
@@ -470,6 +500,10 @@ func (svc *Service) _handleEventModel(settings []NotificationSetting, data []byt
 			err = svc.sendMail(&s, doc)
 		case NotificationTypeMobile:
 			// TODO: implement
+			err = svc.sendMobile(&s, doc)
+		}
+		if err != nil {
+			trace.PrintError(err)
 		}
 	}
 
@@ -492,9 +526,11 @@ func (svc *Service) _sendByTaskId(taskId primitive.ObjectID) (err error) {
 	// send
 	switch s.Type {
 	case NotificationTypeMail:
+		// TODO: implement
 		//err = svc.sendMail(s, m)
 	case NotificationTypeMobile:
-		err = svc.sendMobile(s, m)
+		// TODO: implement
+		//err = svc.sendMobile(s, m)
 	default:
 		return err
 	}
