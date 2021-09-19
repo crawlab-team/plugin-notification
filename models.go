@@ -3,18 +3,18 @@ package main
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type NotificationSetting struct {
-	Id          primitive.ObjectID           `json:"_id" bson:"_id"`
-	Type        string                       `json:"type" bson:"type"`
-	Name        string                       `json:"name" bson:"name"`
-	Description string                       `json:"description" bson:"description"`
-	Enabled     bool                         `json:"enabled" bson:"enabled"`
-	Global      bool                         `json:"global" bson:"global"`
-	Title       string                       `json:"title,omitempty" bson:"title,omitempty"`
-	Template    string                       `json:"template,omitempty" bson:"template,omitempty"`
-	Triggers    []NotificationSettingTrigger `json:"triggers" bson:"triggers"`
-	Targets     []NotificationSettingTarget  `json:"targets" bson:"targets"`
-	Mail        NotificationSettingMail      `json:"mail,omitempty" bson:"mail,omitempty"`
-	Mobile      NotificationSettingMobile    `json:"mobile,omitempty" bson:"mobile,omitempty"`
+	Id          primitive.ObjectID          `json:"_id" bson:"_id"`
+	Type        string                      `json:"type" bson:"type"`
+	Name        string                      `json:"name" bson:"name"`
+	Description string                      `json:"description" bson:"description"`
+	Enabled     bool                        `json:"enabled" bson:"enabled"`
+	Global      bool                        `json:"global" bson:"global"`
+	Title       string                      `json:"title,omitempty" bson:"title,omitempty"`
+	Template    string                      `json:"template,omitempty" bson:"template,omitempty"`
+	Triggers    []string                    `json:"triggers" bson:"triggers"`
+	Targets     []NotificationSettingTarget `json:"targets" bson:"targets"` // TODO: implement
+	Mail        NotificationSettingMail     `json:"mail,omitempty" bson:"mail,omitempty"`
+	Mobile      NotificationSettingMobile   `json:"mobile,omitempty" bson:"mobile,omitempty"`
 }
 
 type NotificationSettingMail struct {

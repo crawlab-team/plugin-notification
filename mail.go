@@ -2,11 +2,7 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/apex/log"
-	"github.com/crawlab-team/crawlab-core/constants"
-	"github.com/crawlab-team/crawlab-core/models/models"
-	"github.com/crawlab-team/crawlab-core/utils"
 	"github.com/matcornic/hermes"
 	"gopkg.in/gomail.v2"
 	"net/mail"
@@ -14,16 +10,16 @@ import (
 	"strconv"
 )
 
-func GetMailContent(s *NotificationSetting, m *models.ModelMap) (content string) {
-	return GetTaskEmailMarkdownContent(m)
-}
+func SendMail(s *NotificationSetting, to, cc, title, content string) error {
+	// theme
+	theme := new(MailThemeFlat)
 
-func SendMail(s *NotificationSetting, m *models.ModelMap) error {
 	// hermes instance
 	h := hermes.Hermes{
-		Theme: new(hermes.Default),
+		Theme: theme,
 		Product: hermes.Product{
-			Name:      "Crawlab Team",
+			Logo:      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxnIGZpbGw9Im5vbmUiPgogICAgICAgIDxjaXJjbGUgY3g9IjE1MCIgY3k9IjE1MCIgcj0iMTMwIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjQwIiBzdHJva2U9IiM0MDllZmYiPgogICAgICAgIDwvY2lyY2xlPgogICAgICAgIDxjaXJjbGUgY3g9IjE1MCIgY3k9IjE1MCIgcj0iMTEwIiBmaWxsPSJ3aGl0ZSI+CiAgICAgICAgPC9jaXJjbGU+CiAgICAgICAgPGNpcmNsZSBjeD0iMTUwIiBjeT0iMTUwIiByPSI3MCIgZmlsbD0iIzQwOWVmZiI+CiAgICAgICAgPC9jaXJjbGU+CiAgICAgICAgPHBhdGggZD0iCiAgICAgICAgICAgIE0gMTUwLDE1MAogICAgICAgICAgICBMIDI4MCwyMjUKICAgICAgICAgICAgQSAxNTAsMTUwIDkwIDAgMCAyODAsNzUKICAgICAgICAgICAgIiBmaWxsPSIjNDA5ZWZmIj4KICAgICAgICA8L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPgo=",
+			Name:      "Crawlab",
 			Copyright: "© 2021 Crawlab-Team",
 		},
 	}
@@ -41,18 +37,22 @@ func SendMail(s *NotificationSetting, m *models.ModelMap) error {
 		SMTPUser:       SMTPUser,
 	}
 	options := sendOptions{
-		To:      m.User.Email,
-		Subject: s.Title,
+		To:      to,
+		Cc:      cc,
+		Subject: title,
 	}
 
-	// content
-	content := GetMailContent(s, m)
+	// add style
+	content += theme.GetStyle()
+
+	// markdown
+	markdown := hermes.Markdown(content + GetFooter())
 
 	// email instance
 	email := hermes.Email{
 		Body: hermes.Body{
-			Name:         m.User.Username,
-			FreeMarkdown: hermes.Markdown(content + GetFooter()),
+			Signature:    "Happy crawling",
+			FreeMarkdown: markdown,
 		},
 	}
 
@@ -149,55 +149,4 @@ func GetFooter() string {
 	return `
 [Github](https://github.com/crawlab-team/crawlab) | [Documentation](http://docs.crawlab.cn) | [Docker](https://hub.docker.com/r/tikazyq/crawlab)
 `
-}
-
-func GetTaskEmailMarkdownContent(m *models.ModelMap) string {
-	n := m.Node
-	s := m.Spider
-	t := m.Task
-	ts := m.TaskStat
-	errMsg := ""
-	statusMsg := fmt.Sprintf(`<span style="color:green">%s</span>`, t.Status)
-	if t.Status == constants.TaskStatusError {
-		errMsg = " with errors"
-		statusMsg = fmt.Sprintf(`<span style="color:red">%s</span>`, t.Status)
-	}
-	return fmt.Sprintf(`
-Your task has finished%s. Please find the task info below.
-
-|Key:|Value|
-|--: | :--|
-|**Task ID:** | %s|
-|**Task Status:** | %s|
-|**Task Param:** | %s|
-|**Spider ID:** | %s|
-|**Spider Name:** | %s|
-|**Node:** | %s|
-|**Create Time:** | %s|
-|**Start Time:** | %s|
-|**Finish Time:** | %s|
-|**Wait Duration:** | %d sec|
-|**Runtime Duration:** | %d sec|
-|**Total Duration:** | %d sec|
-|**Number of Results:** | %d|
-|**Error:** | <span style="color:red">%s</span>|
-
-Please login to Crawlab to view the details.
-`,
-		errMsg,
-		t.Id,
-		statusMsg,
-		t.Param,
-		s.Id.Hex(),
-		s.Name,
-		n.Name,
-		utils.GetLocalTimeString(ts.CreateTs),
-		utils.GetLocalTimeString(ts.StartTs),
-		utils.GetLocalTimeString(ts.EndTs),
-		ts.WaitDuration/1000,
-		ts.RuntimeDuration/1000,
-		ts.TotalDuration/1000,
-		ts.ResultCount,
-		t.Error,
-	)
 }

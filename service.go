@@ -14,13 +14,13 @@ import (
 	grpc "github.com/crawlab-team/crawlab-grpc"
 	plugin "github.com/crawlab-team/crawlab-plugin"
 	"github.com/crawlab-team/go-trace"
-	"github.com/emirpasic/gods/sets/hashset"
+	parser "github.com/crawlab-team/template-parser"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
-	"strings"
+	"os"
 	"time"
 )
 
@@ -36,6 +36,7 @@ func (svc *Service) Init() (err error) {
 	// api
 	api := svc.GetApi()
 	api.POST("/send", svc.send)
+	api.GET("/triggers", svc.getTriggerList)
 	api.GET("/settings", svc.getSettingList)
 	api.GET("/settings/:id", svc.getSetting)
 	api.PUT("/settings", svc.putSetting)
@@ -78,29 +79,46 @@ func (svc *Service) initData() (err error) {
 		{
 			Id:          primitive.NewObjectID(),
 			Type:        NotificationTypeMail,
-			Enabled:     false,
-			Name:        "Mail Notification",
+			Enabled:     true,
+			Name:        "Task Change (Mail)",
 			Description: "This is the default mail notification. You can edit it with your own settings",
-			Mail:        NotificationSettingMail{
-				//Server:         "",
-				//Port:           0,
-				//User:           "",
-				//Password:       "",
-				//SenderEmail:    "",
-				//SenderIdentity: "",
-				//Title:          "",
-				//Template:       "",
-				//To:             "",
-				//Cc:             "",
+			Triggers: []string{
+				"model:tasks:change",
+				"model:tasks:save",
+			},
+			Title: "[Crawlab] Task Update: {{$.status}}",
+			Template: `Dear {{$.user.username}},
+
+Please find the task data as below.
+
+|Key|Value|
+|---|---|
+|Status|{{$.status}}|
+|Spider|{{$.spider.name}}|
+
+`,
+			Mail: NotificationSettingMail{
+				Server:         "smtp.163.com",
+				Port:           "465",
+				User:           os.Getenv("CRAWLAB_PLUGIN_NOTIFICATION_MAIL_USER"),
+				Password:       os.Getenv("CRAWLAB_PLUGIN_NOTIFICATION_MAIL_PASSWORD"),
+				SenderEmail:    os.Getenv("CRAWLAB_PLUGIN_NOTIFICATION_MAIL_SENDER_EMAIL"),
+				SenderIdentity: os.Getenv("CRAWLAB_PLUGIN_NOTIFICATION_MAIL_SENDER_IDENTITY"),
+				To:             "{{$.user[create].email}}",
+				Cc:             os.Getenv("CRAWLAB_PLUGIN_NOTIFICATION_MAIL_CC"),
 			},
 		},
 		{
 			Id:          primitive.NewObjectID(),
 			Type:        NotificationTypeMobile,
-			Enabled:     false,
-			Name:        "Mobile Notification",
+			Enabled:     true,
+			Name:        "Task Change (Mobile)",
 			Description: "This is the default mobile notification. You can edit it with your own settings",
-			Mobile:      NotificationSettingMobile{
+			Triggers: []string{
+				"model:tasks:change",
+				"model:tasks:save",
+			},
+			Mobile: NotificationSettingMobile{
 				//Webhook:  "",
 				//Title:    "",
 				//Template: "",
@@ -141,9 +159,9 @@ func (svc *Service) send(c *gin.Context) {
 
 	switch s.Type {
 	case NotificationTypeMail:
-		err = svc.sendMail(s, m)
+		//err = svc.sendMail(s, m)
 	case NotificationTypeMobile:
-		err = svc.sendMobile(s, m)
+		//err = svc.sendMobile(s, m)
 	default:
 		controllers.HandleErrorInternalServerError(c, errors.New(fmt.Sprintf("%s is not supported", s.Type)))
 		return
@@ -157,17 +175,33 @@ func (svc *Service) send(c *gin.Context) {
 	controllers.HandleSuccess(c)
 }
 
-func (svc *Service) sendMail(s *NotificationSetting, m *models.ModelMap) (err error) {
-	if m.User.Id.IsZero() {
-		return errors.New("user id is empty")
+func (svc *Service) sendMail(s *NotificationSetting, entity bson.M) (err error) {
+	// to
+	to, err := parser.Parse(s.Mail.To, entity)
+	if err != nil {
+		return trace.TraceError(err)
 	}
 
-	title := s.Title
-	if title == "" {
-		title = fmt.Sprintf("[Crawlab] \"%s\" 任务 %s", m.Spider.GetName(), m.Task.GetStatus())
+	// cc
+	cc, err := parser.Parse(s.Mail.Cc, entity)
+	if err != nil {
+		return trace.TraceError(err)
 	}
 
-	if err := SendMail(s, m); err != nil {
+	// title
+	title, err := parser.Parse(s.Title, entity)
+	if err != nil {
+		return trace.TraceError(err)
+	}
+
+	// content
+	content, err := parser.Parse(s.Template, entity)
+	if err != nil {
+		return trace.TraceError(err)
+	}
+
+	// send mail
+	if err := SendMail(s, to, cc, title, content); err != nil {
 		return err
 	}
 
@@ -189,6 +223,43 @@ func (svc *Service) sendMobile(s *NotificationSetting, m *models.ModelMap) (err 
 	}
 
 	return nil
+}
+
+func (svc *Service) getTriggerList(c *gin.Context) {
+	modelList := []string{
+		interfaces.ModelColNameTag,
+		interfaces.ModelColNameNode,
+		interfaces.ModelColNameProject,
+		interfaces.ModelColNameSpider,
+		interfaces.ModelColNameTask,
+		interfaces.ModelColNameJob,
+		interfaces.ModelColNameSchedule,
+		interfaces.ModelColNameUser,
+		interfaces.ModelColNameSetting,
+		interfaces.ModelColNameToken,
+		interfaces.ModelColNameVariable,
+		interfaces.ModelColNameTaskStat,
+		interfaces.ModelColNamePlugin,
+		interfaces.ModelColNameSpiderStat,
+		interfaces.ModelColNameDataSource,
+		interfaces.ModelColNameDataCollection,
+		interfaces.ModelColNamePasswords,
+	}
+	actionList := []string{
+		interfaces.ModelDelegateMethodAdd,
+		interfaces.ModelDelegateMethodChange,
+		interfaces.ModelDelegateMethodDelete,
+		interfaces.ModelDelegateMethodSave,
+	}
+
+	var triggers []string
+	for _, m := range modelList {
+		for _, a := range actionList {
+			triggers = append(triggers, fmt.Sprintf("model:%s:%s", m, a))
+		}
+	}
+
+	controllers.HandleSuccessWithListData(c, triggers, len(triggers))
 }
 
 func (svc *Service) getSettingList(c *gin.Context) {
@@ -308,6 +379,7 @@ func (svc *Service) handleEvents() {
 	log.Infof("start handling events")
 
 	// get stream
+	log.Infof("attempt to obtain grpc stream...")
 	var stream grpc.PluginService_SubscribeClient
 	for {
 		stream = svc.Internal.GetEventService().GetStream()
@@ -317,6 +389,7 @@ func (svc *Service) handleEvents() {
 		}
 		break
 	}
+	log.Infof("obtained grpc stream, start receiving messages...")
 
 	for {
 		// receive stream message
@@ -353,37 +426,15 @@ func (svc *Service) handleEvents() {
 			// settings
 			var settings []NotificationSetting
 			if err := svc.col.Find(bson.M{
-				"enabled": true,
-			}, nil).All(&settings); err != nil {
-				continue
-			}
-
-			// triggers
-			tSet := hashset.New()
-			for _, s := range settings {
-				for _, t := range s.Triggers {
-					tSet.Add(t.Event)
-				}
-			}
-
-			// filter
-			// TODO: performance concern
-			if !tSet.Contains(eventName) {
+				"enabled":  true,
+				"triggers": eventName,
+			}, nil).All(&settings); err != nil || len(settings) == 0 {
 				continue
 			}
 
 			// handle events
-			arr := strings.Split(eventName, ":")
-			switch arr[0] {
-			case "model":
-				if len(arr) < 2 {
-					continue
-				}
-				colName := arr[1]
-				action := arr[2]
-				if err := svc._handleEventModel(colName, action, data.Data); err != nil {
-					trace.PrintError(err)
-				}
+			if err := svc._handleEventModel(settings, data.Data); err != nil {
+				trace.PrintError(err)
 			}
 		default:
 			continue
@@ -391,15 +442,21 @@ func (svc *Service) handleEvents() {
 	}
 }
 
-func (svc *Service) _handleEventModel(colName, action string, data []byte) (err error) {
-	m := models.NewModelMap()
-	switch colName {
-	case interfaces.ModelColNameTask:
-		_ = json.Unmarshal(data, &m.Task)
-		if err := svc._sendByTaskId(m.Task.GetId()); err != nil {
-			return err
+func (svc *Service) _handleEventModel(settings []NotificationSetting, data []byte) (err error) {
+	var doc bson.M
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return err
+	}
+
+	for _, s := range settings {
+		switch s.Type {
+		case NotificationTypeMail:
+			err = svc.sendMail(&s, doc)
+		case NotificationTypeMobile:
+			// TODO: implement
 		}
 	}
+
 	return nil
 }
 
@@ -419,7 +476,7 @@ func (svc *Service) _sendByTaskId(taskId primitive.ObjectID) (err error) {
 	// send
 	switch s.Type {
 	case NotificationTypeMail:
-		err = svc.sendMail(s, m)
+		//err = svc.sendMail(s, m)
 	case NotificationTypeMobile:
 		err = svc.sendMobile(s, m)
 	default:

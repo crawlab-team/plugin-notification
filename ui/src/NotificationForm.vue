@@ -12,11 +12,8 @@
         <el-option value="mobile" label="Mobile"/>
       </el-select>
     </cl-form-item>
-    <cl-form-item :span="1" label="Enabled" prop="enabled">
+    <cl-form-item :span="2" label="Enabled" prop="enabled">
       <cl-switch v-model="internalForm.enabled" @change="onChange"/>
-    </cl-form-item>
-    <cl-form-item :span="1" label="Global" prop="global">
-      <cl-switch v-model="internalForm.global" @change="onChange"/>
     </cl-form-item>
 
     <template v-if="internalForm.type === 'mail'">
@@ -38,7 +35,7 @@
       <cl-form-item :span="2" label="Sender Identity" prop="mail.sender_identity">
         <el-input v-model="internalForm.mail.sender_identity" placeholder="Sender Identity" @change="onChange"/>
       </cl-form-item>
-      <cl-form-item :span="2" label="To" prop="mail.to">
+      <cl-form-item :span="2" label="To" prop="mail.to" required>
         <el-input v-model="internalForm.mail.to" placeholder="To" @change="onChange"/>
       </cl-form-item>
       <cl-form-item :span="2" label="Cc" prop="mail.cc">
@@ -60,7 +57,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, watch} from 'vue';
+import {defineComponent, onMounted, ref, watch} from 'vue';
 
 export default defineComponent({
   name: 'NotificationForm',
@@ -103,7 +100,15 @@ export default defineComponent({
       },
     });
 
+    onMounted(() => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      internalForm.value = props.modelValue;
+    });
+
     watch(() => props.modelValue, () => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
       internalForm.value = props.modelValue;
     });
 

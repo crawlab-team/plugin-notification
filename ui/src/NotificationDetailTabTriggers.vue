@@ -1,7 +1,7 @@
 <template>
   <cl-transfer
       :titles="titles"
-      :data="data"
+      :data="triggerList"
       :value="enabled"
       @change="onChange"
   />
@@ -19,6 +19,12 @@ export default defineComponent({
         return {};
       },
     },
+    triggerList: {
+      type: Array,
+      default: () => {
+        return [];
+      },
+    }
   },
   emits: [
     'change',
@@ -29,21 +35,9 @@ export default defineComponent({
       'Enabled',
     ]);
 
-    const data = ref([
-      {
-        key: 'model:tasks:add',
-        label: 'Create Task',
-      },
-      {
-        key: 'model:tasks:save',
-        label: 'Update Task',
-      },
-    ]);
-
     const enabled = computed(() => {
       const {triggers} = props.form;
-      if (!triggers) return [];
-      return triggers.map(t => t.event);
+      return triggers || [];
     });
 
     const onChange = (value) => {
@@ -52,7 +46,6 @@ export default defineComponent({
 
     return {
       titles,
-      data,
       enabled,
       onChange,
     };

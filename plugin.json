@@ -4,7 +4,10 @@
   "proto": "http",
   "cmd": "go run main.go",
   "endpoint": "localhost:9999",
-  "event_key": "^model:",
+  "event_key": {
+    "include": "^model:",
+    "exclude": "artifact"
+  },
   "ui_components": [
     {
       "name": "notification",

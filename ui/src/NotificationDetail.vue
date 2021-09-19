@@ -16,25 +16,26 @@
         />
       </cl-nav-actions>
 
-      <div class="content-container">
-        <template v-if="activeKey === 'overview'">
-          <NotificationForm
-              ref="formRef"
-              v-model="form"
-          />
-        </template>
-        <NotificationDetailTabTriggers
-            v-else-if="activeKey === 'triggers'"
-            :form="form"
-            @change="onTriggersChange"
+      <template v-if="activeKey === 'overview'">
+        <NotificationForm
+            class="content-container"
+            ref="formRef"
+            v-model="form"
         />
-        <NotificationDetailTabTemplate
-            v-else-if="activeKey === 'template'"
-            :form="form"
-            @title-change="onTitleChange"
-            @template-change="onTemplateChange"
-        />
-      </div>
+      </template>
+      <NotificationDetailTabTriggers
+          class="content-container"
+          v-else-if="activeKey === 'triggers'"
+          :form="form"
+          :trigger-list="triggerList"
+          @change="onTriggersChange"
+      />
+      <NotificationDetailTabTemplate
+          v-else-if="activeKey === 'template'"
+          :form="form"
+          @title-change="onTitleChange"
+          @template-change="onTemplateChange"
+      />
     </div>
   </div>
 </template>
@@ -48,7 +49,7 @@ import NotificationForm from './NotificationForm.vue';
 import NotificationDetailTabTemplate from './NotificationDetailTabTemplate.vue';
 import NotificationDetailTabTriggers from './NotificationDetailTabTriggers.vue';
 
-const endpoint = '/plugin-proxy/notification/settings';
+const endpoint = '/plugin-proxy/notification';
 
 const {
   get,
@@ -90,42 +91,63 @@ export default defineComponent({
 
     const formRef = ref();
 
+    const triggerList = ref([]);
+
     const onBack = () => {
       router.push(`/notifications`);
     };
 
     const onSave = async () => {
       if (formRef.value) await formRef.value.validate();
-      await post(`${endpoint}/${id.value}`, form.value);
+      await post(`${endpoint}/settings/${id.value}`, form.value);
       ElMessage.success('Saved successfully');
     };
 
+    const triggerActionLabelMap = {
+      add: 'Create',
+      save: 'Save',
+      change: 'Change',
+      delete: 'Delete',
+    };
+
+    const getTriggerList = async () => {
+      const res = await get(`${endpoint}/triggers`);
+      const {data} = res;
+      triggerList.value = data.map(t => {
+        const arr = t.split(':');
+        const colName = arr[1];
+        const model = colName.substr(0, arr[1].length - 1);
+        const modelName = model
+            .split('_')
+            .map(w => w.split('').map((c, i) => i === 0 ? c.toUpperCase() : c).join(''))
+            .join(' ');
+        const action = arr[2];
+        const actionLabel = triggerActionLabelMap[action];
+        const label = `${modelName} ${actionLabel}`;
+        return {
+          key: t,
+          label,
+        };
+      });
+    };
+
+    const getSettingForm = async () => {
+      const res = await get(`${endpoint}/settings/${id.value}`);
+      const {data} = res;
+      form.value = data;
+    };
+
     onMounted(() => {
-      (async () => {
-        const res = await get(`${endpoint}/${id.value}`);
-        const {data} = res;
-        form.value = data;
-      })();
+      getSettingForm();
+      getTriggerList();
     });
 
     const onTabSelect = (tabName) => {
       activeKey.value = tabName;
     };
 
-    const allTriggers = ref([
-      {
-        event: 'model:tasks:add',
-        name: 'Create Task',
-      },
-      {
-        event: 'model:tasks:save',
-        name: 'Update Task',
-      },
-    ]);
-
     const onTriggersChange = (value) => {
-      const triggers = value.map(v => allTriggers.value.find(d => d.event === v));
-      form.value.triggers = [].concat(triggers);
+      form.value.triggers = [].concat(value);
     };
 
     const onTitleChange = (value) => {
@@ -143,6 +165,7 @@ export default defineComponent({
       onSave,
       form,
       formRef,
+      triggerList,
       onTabSelect,
       onTriggersChange,
       onTitleChange,
