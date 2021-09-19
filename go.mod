@@ -23,7 +23,7 @@ require (
 	github.com/crawlab-team/crawlab-plugin v0.0.0-20210604093326-57f35f02daf5
 	github.com/crawlab-team/go-trace v0.1.0
 	github.com/crawlab-team/template-parser v0.0.1
-	github.com/emirpasic/gods v1.12.0
+	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gavv/httpexpect/v2 v2.2.0
 	github.com/gin-gonic/gin v1.6.3

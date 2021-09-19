@@ -51,7 +51,7 @@ func SendMail(s *NotificationSetting, to, cc, title, content string) error {
 	// email instance
 	email := hermes.Email{
 		Body: hermes.Body{
-			Signature:    "Happy crawling",
+			Signature:    "Happy Crawling ☺",
 			FreeMarkdown: markdown,
 		},
 	}
@@ -100,10 +100,10 @@ type sendOptions struct {
 
 // send email
 func send(smtpConfig smtpAuthentication, options sendOptions, htmlBody string, txtBody string) error {
-
 	if smtpConfig.Server == "" {
 		return errors.New("SMTP server config is empty")
 	}
+
 	if smtpConfig.Port == 0 {
 		return errors.New("SMTP port config is empty")
 	}

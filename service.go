@@ -21,6 +21,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -92,10 +93,23 @@ func (svc *Service) initData() (err error) {
 Please find the task data as below.
 
 |Key|Value|
-|---|---|
-|Status|{{$.status}}|
+|:-:|:--|
+|Task Status|{{$.status}}|
+|Task Priority|{{$.priority}}|
+|Task Mode|{{$.mode}}|
+|Task Command|{{$.cmd}}|
+|Task Params|{{$.params}}|
+|Error Message|{{$.error}}|
+|Node|{{$.node.name}}|
 |Spider|{{$.spider.name}}|
-
+|Project|{{$.spider.project.name}}|
+|Schedule|{{$.schedule.name}}|
+|Result Count|{{$.:task_stat.result_count}}|
+|Wait Duration (sec)|{#{{$.:task_stat.wait_duration}}/1000#}|
+|Runtime Duration (sec)|{#{{$.:task_stat.runtime_duration}}/1000#}|
+|Total Duration (sec)|{#{{$.:task_stat.total_duration}}/1000#}|
+|Result Count|{{$.:task_stat.result_count}}|
+|Avg Results / Sec|{#{{$.:task_stat.result_count}}/({{$.:task_stat.total_duration}}/1000)#}|
 `,
 			Mail: NotificationSettingMail{
 				Server:         "smtp.163.com",
@@ -179,25 +193,28 @@ func (svc *Service) sendMail(s *NotificationSetting, entity bson.M) (err error) 
 	// to
 	to, err := parser.Parse(s.Mail.To, entity)
 	if err != nil {
-		return trace.TraceError(err)
+		log.Warnf("parsing 'to' error: %v", err)
+	}
+	if to == "" {
+		return nil
 	}
 
 	// cc
 	cc, err := parser.Parse(s.Mail.Cc, entity)
 	if err != nil {
-		return trace.TraceError(err)
+		log.Warnf("parsing 'cc' error: %v", err)
 	}
 
 	// title
 	title, err := parser.Parse(s.Title, entity)
 	if err != nil {
-		return trace.TraceError(err)
+		log.Warnf("parsing 'title' error: %v", err)
 	}
 
 	// content
 	content, err := parser.Parse(s.Template, entity)
 	if err != nil {
-		return trace.TraceError(err)
+		log.Warnf("parsing 'content' error: %v", err)
 	}
 
 	// send mail
@@ -396,12 +413,11 @@ func (svc *Service) handleEvents() {
 		msg, err := stream.Recv()
 
 		if err != nil {
-			// TODO: re-connect
-
 			// end
-			if err == io.EOF {
-				log.Infof("received EOF signal, disconnecting")
-				return
+			if strings.HasSuffix(err.Error(), io.EOF.Error()) {
+				// TODO: implement
+				log.Infof("received EOF signal, re-connecting...")
+				//svc.GetGrpcClient().Restart()
 			}
 
 			trace.PrintError(err)
