@@ -8,7 +8,7 @@
     "include": "^model:",
     "exclude": "artifact"
   },
-  "install_url": "file:///Users/marvzhang/projects/crawlab-team/plugin-notification",
+  "install_url": "https://github.com/crawlab-team/plugin-notification",
   "deploy_mode": "master_only",
   "restart": true,
   "ui_components": [
