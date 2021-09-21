@@ -2,12 +2,15 @@
   "name": "notification",
   "description": "A plugin for handling notifications",
   "proto": "http",
-  "cmd": "go run main.go",
+  "cmd": "go run ./...",
   "endpoint": "localhost:9999",
   "event_key": {
     "include": "^model:",
     "exclude": "artifact"
   },
+  "install_url": "file:///Users/marvzhang/projects/crawlab-team/plugin-notification",
+  "deploy_mode": "master_only",
+  "restart": true,
   "ui_components": [
     {
       "name": "notification",
