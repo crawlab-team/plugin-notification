@@ -13,18 +13,6 @@
   "restart": true,
   "ui_components": [
     {
-      "name": "notification",
-      "title": "Notification",
-      "src": "ui/src/NotificationTab.vue",
-      "type": "tab",
-      "path": "notification",
-      "parent_paths": [
-        "/projects/:id",
-        "/spiders/:id",
-        "/users/:id"
-      ]
-    },
-    {
       "name": "notification-list",
       "title": "Notifications",
       "src": "ui/src/NotificationList.vue",
