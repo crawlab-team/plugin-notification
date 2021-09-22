@@ -2,14 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/apex/log"
 	"github.com/crawlab-team/crawlab-core/controllers"
 	"github.com/crawlab-team/crawlab-core/entity"
 	"github.com/crawlab-team/crawlab-core/interfaces"
-	"github.com/crawlab-team/crawlab-core/models/delegate"
-	"github.com/crawlab-team/crawlab-core/models/models"
 	mongo2 "github.com/crawlab-team/crawlab-db/mongo"
 	grpc "github.com/crawlab-team/crawlab-grpc"
 	plugin "github.com/crawlab-team/crawlab-plugin"
@@ -36,7 +33,7 @@ func (svc *Service) Init() (err error) {
 
 	// api
 	api := svc.GetApi()
-	api.POST("/send", svc.send)
+	//api.POST("/send", svc.send)
 	api.GET("/triggers", svc.getTriggerList)
 	api.GET("/settings", svc.getSettingList)
 	api.GET("/settings/:id", svc.getSetting)
@@ -165,45 +162,6 @@ Please find the task data as below.
 		return err
 	}
 	return nil
-}
-
-func (svc *Service) send(c *gin.Context) {
-	var payload SendPayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		controllers.HandleErrorInternalServerError(c, err)
-		return
-	}
-
-	// models
-	m, err := svc._getModels(payload)
-	if err != nil {
-		controllers.HandleErrorInternalServerError(c, err)
-		return
-	}
-
-	// setting
-	s, err := svc._getSetting(m)
-	if err != nil {
-		controllers.HandleErrorInternalServerError(c, err)
-		return
-	}
-
-	switch s.Type {
-	case NotificationTypeMail:
-		//err = svc.sendMail(s, m)
-	case NotificationTypeMobile:
-		//err = svc.sendMobile(s, m)
-	default:
-		controllers.HandleErrorInternalServerError(c, errors.New(fmt.Sprintf("%s is not supported", s.Type)))
-		return
-	}
-
-	if err != nil {
-		controllers.HandleErrorInternalServerError(c, err)
-		return
-	}
-
-	controllers.HandleSuccess(c)
 }
 
 func (svc *Service) sendMail(s *NotificationSetting, entity bson.M) (err error) {
@@ -510,38 +468,6 @@ func (svc *Service) _handleEventModel(settings []NotificationSetting, data []byt
 	return nil
 }
 
-func (svc *Service) _sendByTaskId(taskId primitive.ObjectID) (err error) {
-	// models
-	m, err := svc._getModelsByTaskId(taskId)
-	if err != nil {
-		return err
-	}
-
-	// setting
-	s, err := svc._getSetting(m)
-	if err != nil {
-		return err
-	}
-
-	// send
-	switch s.Type {
-	case NotificationTypeMail:
-		// TODO: implement
-		//err = svc.sendMail(s, m)
-	case NotificationTypeMobile:
-		// TODO: implement
-		//err = svc.sendMobile(s, m)
-	default:
-		return err
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (svc *Service) _toggleSettingFunc(value bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id, err := primitive.ObjectIDFromHex(c.Param("id"))
@@ -561,206 +487,6 @@ func (svc *Service) _toggleSettingFunc(value bool) func(c *gin.Context) {
 		}
 		controllers.HandleSuccess(c)
 	}
-}
-
-func (svc *Service) _getModels(payload SendPayload) (m *models.ModelMap, err error) {
-	return svc._getModelsByTaskId(payload.TaskId)
-}
-
-func (svc *Service) _getModelsByTaskId(taskId primitive.ObjectID) (m *models.ModelMap, err error) {
-	m = models.NewModelMap()
-	var doc interfaces.Model
-
-	// task
-	taskSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdTask)
-	if err != nil {
-		return nil, err
-	}
-	doc, err = taskSvc.GetById(taskId)
-	if err != nil {
-		return
-	}
-	m.Task = *doc.(*models.Task)
-
-	// spider
-	spiderSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdSpider)
-	if err != nil {
-		return nil, err
-	}
-	doc, err = spiderSvc.GetById(m.Task.GetSpiderId())
-	if err != nil {
-		return nil, err
-	}
-	m.Spider = *doc.(*models.Spider)
-
-	// node
-	nodeSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdNode)
-	if err != nil {
-		return nil, err
-	}
-	doc, err = nodeSvc.GetById(m.Task.GetNodeId())
-	if err != nil {
-		return nil, err
-	}
-	m.Node = *doc.(*models.Node)
-
-	// task stat
-	taskStatSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdTaskStat)
-	if err != nil {
-		return nil, err
-	}
-	doc, err = taskStatSvc.GetById(m.Task.GetId())
-	if err != nil {
-		return nil, err
-	}
-	m.TaskStat = *doc.(*models.TaskStat)
-
-	// project
-	if !m.Spider.ProjectId.IsZero() {
-		projectSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdProject)
-		if err != nil {
-			return nil, err
-		}
-		doc, err = projectSvc.GetById(m.Spider.ProjectId)
-		if err != nil {
-			return nil, err
-		}
-		m.Project = *doc.(*models.Project)
-	}
-
-	// user
-	ta, err := delegate.NewModelDelegate(&m.Task).GetArtifact()
-	if err != nil {
-		return nil, err
-	}
-	taSys := ta.GetSys()
-	if taSys != nil {
-		var uid primitive.ObjectID
-		if !taSys.GetUpdateUid().IsZero() {
-			uid = taSys.GetUpdateUid()
-		} else {
-			uid = taSys.GetCreateUid()
-		}
-		if !uid.IsZero() {
-			userSvc, err := svc.GetModelService().NewBaseServiceDelegate(interfaces.ModelIdUser)
-			if err != nil {
-				return nil, err
-			}
-			doc, err = userSvc.GetById(uid)
-			if err != nil {
-				return nil, err
-			}
-			m.User = *doc.(*models.User)
-		}
-	}
-
-	return m, nil
-}
-
-func (svc *Service) _getParamsAndQuery(c *gin.Context) (model string, oid primitive.ObjectID, query bson.M) {
-	model = c.Param("model")
-	oidStr := c.Param("oid")
-
-	// query
-	query = bson.M{"t": ExtraValueTypeNotification}
-
-	// if empty, set model as global
-	if model == "" {
-		model = ExtraValueModelGlobal
-	}
-	query["m"] = bson.M{"m": model}
-
-	// object id (associated with model)
-	if oidStr != "" {
-		var err error
-		oid, err = primitive.ObjectIDFromHex(oidStr)
-		if err != nil {
-			controllers.HandleErrorBadRequest(c, err)
-			return
-		}
-		query["oid"] = oid
-	}
-
-	return model, oid, query
-}
-
-func (svc *Service) _getSetting(m *models.ModelMap) (setting *NotificationSetting, err error) {
-	targets := []bson.M{
-		{
-			"_id":   m.Spider.Id,
-			"model": interfaces.ModelColNameSpider,
-		},
-		{
-			"_id":   m.Project.Id,
-			"model": interfaces.ModelColNameProject,
-		},
-		//{
-		//	"_id":   m.User.Id,
-		//	"model": interfaces.ModelColNameUser,
-		//},
-		{
-			"global": true,
-		},
-	}
-
-	for _, target := range targets {
-		s, err := svc._getSettingByTarget(target)
-		if err != nil {
-			return nil, err
-		}
-		if s == nil {
-			continue
-		}
-
-		// found setting
-		return s, nil
-	}
-
-	// not found
-	return nil, nil
-}
-
-func (svc *Service) _getSettingByTarget(target bson.M) (setting *NotificationSetting, err error) {
-	isGlobal := false
-	res, ok := target["global"]
-	if ok {
-		isGlobal, _ = res.(bool)
-	}
-
-	var query bson.M
-	if isGlobal {
-		query = bson.M{"global": true}
-	} else {
-		query = bson.M{"targets": target}
-		res, ok := target["_id"]
-		if !ok {
-			return nil, nil
-		}
-		_id, ok := res.(primitive.ObjectID)
-		if !ok {
-			return nil, nil
-		}
-		if _id.IsZero() {
-			return nil, nil
-		}
-	}
-
-	var s NotificationSetting
-	if err := svc.col.Find(query, nil).One(&s); err != nil {
-		if err.Error() == mongo.ErrNoDocuments.Error() {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return &s, nil
-}
-
-func (svc *Service) _getSettingsFromExtraValue(ev *models.ExtraValue) (settings *NotificationSetting) {
-	var s NotificationSetting
-	data, _ := json.Marshal(ev.Value)
-	_ = json.Unmarshal(data, &s)
-	return &s
 }
 
 func NewService() *Service {
