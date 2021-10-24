@@ -10,7 +10,7 @@
   },
   "install_url": "https://github.com/crawlab-team/plugin-notification",
   "deploy_mode": "master_only",
-  "restart": true,
+  "auto_start": true,
   "ui_components": [
     {
       "name": "notification-list",
