@@ -49,6 +49,10 @@ import NotificationForm from './NotificationForm.vue';
 import NotificationDetailTabTemplate from './NotificationDetailTabTemplate.vue';
 import NotificationDetailTabTriggers from './NotificationDetailTabTriggers.vue';
 
+const pluginName = 'notification';
+const t = (path) => window['_tp'](pluginName, path);
+const _t = window['_t'];
+
 const endpoint = '/plugin-proxy/notification';
 
 const {
@@ -72,18 +76,18 @@ export default defineComponent({
 
     const activeKey = ref('overview');
 
-    const tabs = ref([
+    const tabs = computed(() => [
       {
         id: 'overview',
-        title: 'Overview',
+        title: t('tabs.overview'),
       },
       {
         id: 'triggers',
-        title: 'Triggers',
+        title: t('tabs.triggers'),
       },
       {
         id: 'template',
-        title: 'Template',
+        title: t('tabs.template'),
       },
     ]);
 
@@ -100,14 +104,14 @@ export default defineComponent({
     const onSave = async () => {
       if (formRef.value) await formRef.value.validate();
       await post(`${endpoint}/settings/${id.value}`, form.value);
-      ElMessage.success('Saved successfully');
+      ElMessage.success(_t('common.message.success.save'));
     };
 
     const triggerActionLabelMap = {
-      add: 'Create',
-      save: 'Save',
-      change: 'Change',
-      delete: 'Delete',
+      add: t('actions.add'),
+      save: t('actions.save'),
+      change: t('actions.change'),
+      delete: t('actions.delete'),
     };
 
     const getTriggerList = async () => {
@@ -170,6 +174,7 @@ export default defineComponent({
       onTriggersChange,
       onTitleChange,
       onTemplateChange,
+      t,
     };
   },
 });

@@ -23,10 +23,14 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, h} from 'vue';
+import {defineComponent, computed, ref, h} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest, ClSwitch, ClNavLink} from 'crawlab-ui';
 import NotificationForm from './NotificationForm.vue';
+
+const pluginName = 'notification';
+const t = (path) => window['_tp'](pluginName, path);
+const _t = window['_t'];
 
 const endpoint = '/plugin-proxy/notification/settings';
 
@@ -48,10 +52,10 @@ export default defineComponent({
   setup() {
     const router = useRouter();
 
-    const tableColumns = [
+    const tableColumns = computed(() => [
       {
         key: 'name',
-        label: 'Name',
+        label: t('list.table.columns.name'),
         icon: ['fa', 'font'],
         width: '150',
         value: (row) => h(ClNavLink, {
@@ -61,13 +65,14 @@ export default defineComponent({
       },
       {
         key: 'type',
-        label: 'Type',
+        label: t('list.table.columns.type'),
         icon: ['fa', 'list'],
         width: '120',
+        value: (row) => t(`notifications.type.${row.type}`)
       },
       {
         key: 'enabled',
-        label: 'Enabled',
+        label: t('list.table.columns.enabled'),
         icon: ['fa', 'toggle-on'],
         width: '120',
         value: (row) => h(ClSwitch, {
@@ -84,20 +89,20 @@ export default defineComponent({
       },
       {
         key: 'description',
-        label: 'Description',
+        label: t('list.table.columns.description'),
         icon: ['fa', 'comment-alt'],
-        width: 'auto',
+        width: '800',
       },
       {
         key: 'actions',
-        label: 'Actions',
+        label: _t('components.table.columns.actions'),
         fixed: 'right',
         width: '200',
         buttons: [
           {
             type: 'primary',
             icon: ['fa', 'search'],
-            tooltip: 'View',
+            tooltip: _t('common.actions.view'),
             onClick: (row) => {
               router.push(`/notifications/${row._id}`);
             },
@@ -115,7 +120,7 @@ export default defineComponent({
             type: 'danger',
             size: 'mini',
             icon: ['fa', 'trash-alt'],
-            tooltip: 'Delete',
+            tooltip: _t('common.actions.delete'),
             disabled: (row) => !!row.active,
             onClick: async (row) => {
               // const res = await ElMessageBox.confirm('Are you sure to delete?', 'Delete');
@@ -128,7 +133,7 @@ export default defineComponent({
         ],
         disableTransfer: true,
       },
-    ];
+    ]);
 
     const tableData = ref([]);
 
@@ -165,8 +170,8 @@ export default defineComponent({
         children: [
           {
             buttonType: 'label',
-            label: 'New Notification',
-            tooltip: 'New Notification',
+            label: t('list.new.label'),
+            tooltip: t('list.new.tooltip'),
             icon: ['fa', 'plus'],
             type: 'success',
             onClick: () => {
@@ -193,6 +198,7 @@ export default defineComponent({
       dialogVisible,
       form,
       onDialogClose,
+      t,
     };
   },
 });

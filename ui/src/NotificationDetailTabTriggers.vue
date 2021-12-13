@@ -10,6 +10,10 @@
 <script lang="ts">
 import {computed, defineComponent, ref} from 'vue';
 
+const pluginName = 'notifications';
+const t = (path) => window['_tp'](pluginName, path);
+const _t = window['_t'];
+
 export default defineComponent({
   name: 'NotificationDetailTabTriggers',
   props: {
@@ -30,9 +34,9 @@ export default defineComponent({
     'change',
   ],
   setup(props, {emit}) {
-    const titles = ref([
-      'Available',
-      'Enabled',
+    const titles = computed(() => [
+      _t('components.transfer.titles.available'),
+      _t('components.transfer.titles.enabled'),
     ]);
 
     const enabled = computed(() => {

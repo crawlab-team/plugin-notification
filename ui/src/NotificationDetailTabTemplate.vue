@@ -74,4 +74,18 @@ export default defineComponent({
 .notification-detail-tab-template .title {
   /*margin-bottom: 20px;*/
 }
+
+.notification-detail-tab-template .title >>> .el-input__inner{
+  border: none;
+}
+
+.notification-detail-tab-template >>> .editor-toolbar {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+.notification-detail-tab-template >>> .CodeMirror {
+  border-radius: 0;
+}
 </style>
