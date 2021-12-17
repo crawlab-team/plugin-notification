@@ -1,4 +1,4 @@
-package main
+package core
 
 // MailThemeFlat is a theme
 type MailThemeFlat struct{}
