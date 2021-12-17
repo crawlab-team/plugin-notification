@@ -42,6 +42,7 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
+github.com/CloudyKit/jet v2.1.2+incompatible/go.mod h1:HPYO+50pSWkPoj9Q/eq0aRGByCL6ScRlUmiEX5Zgm+w=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
@@ -148,6 +149,8 @@ github.com/crawlab-team/goseaweedfs v0.6.0-beta.20211101.1936 h1:c4SgTj2baDqD2UY
 github.com/crawlab-team/goseaweedfs v0.6.0-beta.20211101.1936/go.mod h1:u+rwfqb0rnYllTLjCctE/z1Yp+TC8L+CbbWH8E2NstA=
 github.com/crawlab-team/template-parser v0.0.1 h1:5WdXu/gW5JRGi5gymEUJhY0b/xkkeLNdeMT5znfsUz8=
 github.com/crawlab-team/template-parser v0.0.1/go.mod h1:wLqVUn11lLD4DUibpKNwktHHhhIBD/5ZlVg6pPxv434=
+github.com/crawlab-team/template-parser v0.0.2 h1:gxRPTPc51QeE6xEcsDpWJZ++hVY2/aUB2emawCkCYjU=
+github.com/crawlab-team/template-parser v0.0.2/go.mod h1:5aYvZZP8yURneihTkBxRGLjWl9rm8FKavU7yjlwaDOs=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
