@@ -137,6 +137,7 @@ github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211213.2006 h1:1NcRmpAIX/4c
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211213.2006/go.mod h1:gCUkocyfMdmGNneV9YjeobgOt9K+ftA1KjvRKvJDqkE=
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211218.1814 h1:gEhj82vvH3xRSgLLeH5TfAx7b8TAZt/KSAIOkkzA4KQ=
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211218.1814/go.mod h1:gCUkocyfMdmGNneV9YjeobgOt9K+ftA1KjvRKvJDqkE=
+github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211218.1828 h1:NDK4de5YF+sSyHr1A2PewQRn9LyJrsWFnsbtKEEVOMA=
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211218.1828/go.mod h1:gCUkocyfMdmGNneV9YjeobgOt9K+ftA1KjvRKvJDqkE=
 github.com/crawlab-team/crawlab-vcs v0.1.0 h1:LjtKOOFzx1o7vvgGppC7jt/8lznyvFwwXBYggbSW9+4=
 github.com/crawlab-team/crawlab-vcs v0.1.0/go.mod h1:G6Hnt/3255QCGHO5Q0xJe1AbJE7m5t65E0v7flRJBJM=
