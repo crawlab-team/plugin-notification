@@ -119,6 +119,7 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:ma
 github.com/crawlab-team/crawlab-core v0.0.1/go.mod h1:6dJHMvrmIJbfYHhYNeGZkGOLEBvur+yGiFzLCRXx92k=
 github.com/crawlab-team/crawlab-core v0.6.0-beta.20211213.2006 h1:HI4DHGm94DzcQQSHaAYgZKls0Y0hN3T8//3LsmYqLGM=
 github.com/crawlab-team/crawlab-core v0.6.0-beta.20211213.2006/go.mod h1:ZFiBIFfs5tvSmtlc4zcyWyes6w0VVjAh/85QsDeyOuE=
+github.com/crawlab-team/crawlab-core v0.6.0-beta.20211219.1940 h1:Nil1F6ePFkN/VF1M4RMOC3Wpt/VtXQQNOGK9Ls0DDTs=
 github.com/crawlab-team/crawlab-core v0.6.0-beta.20211219.1940/go.mod h1:z4WY7t+bhia2pti3422oURjeFLMxODGmRiSryTccIW8=
 github.com/crawlab-team/crawlab-db v0.0.2/go.mod h1:o7o4rbcyAWlFGHg9VS7V7tM/GqRq+N2mnAXO71cZA78=
 github.com/crawlab-team/crawlab-db v0.1.1 h1:156h2fbbFKXAHs1mxprqRFC8zs2nrdyaG9JKG7patVw=
@@ -147,6 +148,7 @@ github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211218.1828/go.mod h1:gCUko
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211219.1931 h1:VcKaMUZ82j0sl+6n4BYVHSBkaMYPV4/z07Y3bK660UM=
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211219.1931/go.mod h1:e6uJpXu4723ajf/i0Y/AArA0OHg2jpAM8HUJPB5Bb4w=
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211219.2039/go.mod h1:e6uJpXu4723ajf/i0Y/AArA0OHg2jpAM8HUJPB5Bb4w=
+github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211219.2058 h1:OGGiZj00tY700PCEwhwpHdGfdQxsW5RBR24uXeP3nZw=
 github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211219.2058/go.mod h1:9q6X2RCQ4rRtiwFujddSrijHh8uP67oFyWGe5l3DZyo=
 github.com/crawlab-team/crawlab-vcs v0.1.0 h1:LjtKOOFzx1o7vvgGppC7jt/8lznyvFwwXBYggbSW9+4=
 github.com/crawlab-team/crawlab-vcs v0.1.0/go.mod h1:G6Hnt/3255QCGHO5Q0xJe1AbJE7m5t65E0v7flRJBJM=
@@ -284,6 +286,7 @@ github.com/gobuffalo/packr/v2 v2.0.9/go.mod h1:emmyGweYTm6Kdper+iywB6YK5YzuKchGt
 github.com/gobuffalo/packr/v2 v2.2.0/go.mod h1:CaAwI0GPIAv+5wKLtv8Afwl+Cm78K/I/VCm/3ptBN+0=
 github.com/gobuffalo/syncx v0.0.0-20190224160051-33c29581e754/go.mod h1:HhnNqWY95UYwwW3uSASeV7vtgYkT2t16hJgV3AEPUpw=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
+github.com/gogf/greuse v1.1.0 h1:tID8vkYr1Hx4sNvXMY1nLacJjhoXeUwW0uyztVVpgzk=
 github.com/gogf/greuse v1.1.0/go.mod h1:lZZcvDkB3mLtr6y4mQg7HTG4rnmoT1z962appNLMPGI=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.1 h1:/s5zKNz0uPFCZ5hddgPdo2TK2TVrUNMn0OOX8/aZMTE=
@@ -963,6 +966,7 @@ golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c h1:F1jZWGFhYfh0Ci55sIpILtKKK
 golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210915083310-ed5796bab164 h1:7ZDGnxgHAMw7thfC5bEos0RDAccZKxioiWBhfIe+tvw=
 golang.org/x/sys v0.0.0-20210915083310-ed5796bab164/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e h1:fLOSk5Q00efkSvAm+4xcoXD+RRmLmmulPn5I3Y9F2EM=
 golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 h1:v+OssWQX+hTHEmOBgwxdZxK4zHq3yOs8F9J7mk0PY8E=
