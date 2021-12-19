@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/apex/log v1.9.0
-	github.com/crawlab-team/crawlab-core v0.6.0-beta.20211213.2006
+	github.com/crawlab-team/crawlab-core v0.6.0-beta.20211219.1940
 	github.com/crawlab-team/crawlab-db v0.1.3
 	github.com/crawlab-team/crawlab-grpc v0.6.0-beta.20211219.1930
 	github.com/crawlab-team/crawlab-plugin v0.6.0-beta.20211219.2058
